@@ -1,0 +1,9 @@
+langchain
+chromadb
+pytesseract
+pymupdf
+spacy
+fastapi
+uvicorn
+sentence-transformers
+python-multipart
