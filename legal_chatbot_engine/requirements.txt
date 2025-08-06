@@ -1,4 +1,4 @@
-langchain
+langchain-community
 chromadb
 pytesseract
 pymupdf

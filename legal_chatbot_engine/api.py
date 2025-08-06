@@ -5,11 +5,26 @@ from document_processor import process_document
 from vector_store import create_vector_store, load_vector_store
 import os
 from typing import List
+from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI(
     title="Vakil Buddy Legal Chatbot AI Engine",
     description="API for the Legal Chatbot's RAG pipeline, capable of analyzing legal documents and generating context-aware answers, providing summarization, and future capabilities like entity extraction and document comparison.",
     version="1.2.0" # Updated version for new features
+)
+
+origins = [
+    "http://localhost",
+    "http://localhost:3000",  # React app runs on port 3000 by default
+    "http://127.0.0.1:3000",
+]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 # Pydantic model for incoming query requests

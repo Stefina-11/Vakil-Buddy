@@ -1,5 +1,5 @@
-from langchain.vectorstores import Chroma
-from langchain.embeddings import SentenceTransformerEmbeddings
+from langchain_community.vectorstores import Chroma
+from langchain_community.embeddings import SentenceTransformerEmbeddings
 from typing import List
 import os
 from config import CHROMA_DB_DIR, EMBEDDING_MODEL_NAME, DOCUMENTS_DIR

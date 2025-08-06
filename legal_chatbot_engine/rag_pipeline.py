@@ -1,7 +1,7 @@
 from langchain.chains import RetrievalQA, create_extraction_chain
 from langchain.chains.summarize import load_summarize_chain
-from langchain.chat_models import ChatOpenAI
-from langchain.llms import Ollama
+from langchain_community.chat_models import ChatOpenAI
+from langchain_community.llms import Ollama
 from langchain.prompts import PromptTemplate
 from langchain.docstore.document import Document
 from vector_store import load_vector_store
