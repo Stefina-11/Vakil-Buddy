@@ -1,3 +1,4 @@
+import spacy
 from langchain.chains import RetrievalQA, create_extraction_chain
 from langchain.chains.summarize import load_summarize_chain
 from langchain_community.chat_models import ChatOpenAI
@@ -8,6 +9,14 @@ from vector_store import load_vector_store
 import os
 from typing import List, Dict, Any
 from config import LLM_PROVIDER, OPENAI_API_KEY, OPENAI_MODEL_NAME, OPENAI_TEMPERATURE, OLLAMA_MODEL_NAME, OLLAMA_BASE_URL
+
+# Load spaCy model
+# Ensure you have downloaded the model, e.g., by running: python -m spacy download en_core_web_sm
+try:
+    nlp = spacy.load("en_core_web_sm")
+except OSError:
+    print("SpaCy model 'en_core_web_sm' not found. Please run 'python -m spacy download en_core_web_sm'")
+    nlp = None
 
 class DummyLLM:
     def __init__(self):
@@ -114,24 +123,63 @@ def extract_entities_from_text(text: str) -> Dict[str, Any]:
     if isinstance(llm, DummyLLM):
         return {"message": "Simulated entity extraction. Integrate a real LLM for actual extraction.", "entities": {}}
 
-    schema = {
-        "properties": {
-            "case_name": {"type": "string", "description": "The name of the legal case."},
-            "parties": {"type": "array", "items": {"type": "string"}, "description": "List of parties involved in the case."},
-            "date_of_judgment": {"type": "string", "format": "date", "description": "The date of the judgment or order."},
-            "sections_cited": {"type": "array", "items": {"type": "string"}, "description": "List of legal sections or acts cited."},
-            "court": {"type": "string", "description": "The court where the case was heard."},
-            "judge": {"type": "string", "description": "The name of the presiding judge(s)."}
-        },
-        "required": ["case_name", "parties"],
-    }
+    extracted_data = {}
+    if nlp:
+        doc = nlp(text)
+        # Example of extracting common entities using spaCy
+        # You can customize this based on the types of legal entities you need
+        extracted_data["persons"] = [ent.text for ent in doc.ents if ent.label_ == "PERSON"]
+        extracted_data["organizations"] = [ent.text for ent in doc.ents if ent.label_ == "ORG"]
+        extracted_data["dates"] = [ent.text for ent in doc.ents if ent.label_ == "DATE"]
+        extracted_data["gpes"] = [ent.text for ent in doc.ents if ent.label_ == "GPE"] # Geo-political entity
 
-    try:
-        chain = create_extraction_chain(schema, llm)
-        extracted_data = chain.run(text)
-        return {"message": "Extracted entities.", "entities": extracted_data}
-    except Exception as e:
-        return {"message": f"Error during entity extraction: {str(e)}", "entities": {}}
+        # You can also use the LLM for more complex or specific entity extraction
+        # based on a schema, as was done previously. Combining both approaches
+        # can yield better results.
+        schema = {
+            "properties": {
+                "case_name": {"type": "string", "description": "The name of the legal case."},
+                "parties": {"type": "array", "items": {"type": "string"}, "description": "List of parties involved in the case."},
+                "date_of_judgment": {"type": "string", "format": "date", "description": "The date of the judgment or order."},
+                "sections_cited": {"type": "array", "items": {"type": "string"}, "description": "List of legal sections or acts cited."},
+                "court": {"type": "string", "description": "The court where the case was heard."},
+                "judge": {"type": "string", "description": "The name of the presiding judge(s)."}
+            },
+            "required": ["case_name", "parties"],
+        }
+        try:
+            chain = create_extraction_chain(schema, llm)
+            llm_extracted_data = chain.run(text)
+            # Merge LLM extracted data with spaCy extracted data
+            extracted_data.update(llm_extracted_data)
+        except Exception as e:
+            print(f"Warning: LLM-based entity extraction failed: {e}")
+            extracted_data["llm_extraction_error"] = str(e)
+
+    else:
+        extracted_data["message"] = "SpaCy model not loaded. Falling back to LLM-only extraction if configured."
+        # Fallback to LLM-only extraction if spaCy is not available
+        schema = {
+            "properties": {
+                "case_name": {"type": "string", "description": "The name of the legal case."},
+                "parties": {"type": "array", "items": {"type": "string"}, "description": "List of parties involved in the case."},
+                "date_of_judgment": {"type": "string", "format": "date", "description": "The date of the judgment or order."},
+                "sections_cited": {"type": "array", "items": {"type": "string"}, "description": "List of legal sections or acts cited."},
+                "court": {"type": "string", "description": "The court where the case was heard."},
+                "judge": {"type": "string", "description": "The name of the presiding judge(s)."}
+            },
+            "required": ["case_name", "parties"],
+        }
+        try:
+            chain = create_extraction_chain(schema, llm)
+            llm_extracted_data = chain.run(text)
+            extracted_data.update(llm_extracted_data)
+        except Exception as e:
+            print(f"Error during LLM-only entity extraction: {str(e)}")
+            extracted_data["llm_extraction_error"] = str(e)
+
+
+    return {"message": "Extracted entities.", "entities": extracted_data}
 
 def compare_documents(doc1_chunks: List[str], doc2_chunks: List[str]) -> Dict[str, Any]:
     """
@@ -164,6 +212,36 @@ def compare_documents(doc1_chunks: List[str], doc2_chunks: List[str]) -> Dict[st
         return {"message": "Document comparison completed.", "differences": comparison_result}
     except Exception as e:
         return {"message": f"Error during document comparison: {str(e)}", "differences": {}}
+
+def extract_citations_from_text(text: str) -> List[str]:
+    """
+    Extracts common Indian legal citations from the given text using regex.
+    This is a basic implementation and can be expanded for more complex patterns.
+    """
+    citations = []
+    # Regex for common Indian legal citations (e.g., "Section X of Y Act", "Article Z")
+    # This is a simplified example; real-world legal citation regex can be very complex.
+    # Examples:
+    # - Section 302 of the Indian Penal Code
+    # - Article 21 of the Constitution
+    # - Order XXI Rule 10 CPC
+    # - (2023) 1 SCC 123
+    
+    # Pattern for "Section X of Y Act" or "Article X of Y"
+    section_pattern = r"(?:Section|Article|Rule|Order)\s+\d+(?:[A-Za-z])?\s+(?:of\s+the\s+)?(?:[A-Z][a-zA-Z\s]+(?:Act|Code|Constitution|Rules|Regulation),?\s+\d{4})?"
+    
+    # Pattern for common law reports (e.g., (YEAR) VOLUME REPORTER PAGE)
+    # This is highly simplified and would need to be much more robust for real cases.
+    case_pattern = r"\(\d{4}\)\s+\d+\s+[A-Z]+\s+\d+"
+
+    # Find all matches
+    citations.extend(re.findall(section_pattern, text, re.IGNORECASE))
+    citations.extend(re.findall(case_pattern, text, re.IGNORECASE))
+
+    # Remove duplicates and clean up whitespace
+    citations = list(set([re.sub(r'\s+', ' ', c).strip() for c in citations]))
+    
+    return citations
 
 
 if __name__ == "__main__":

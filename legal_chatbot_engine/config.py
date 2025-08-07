@@ -26,6 +26,10 @@ EMBEDDING_MODEL_NAME = os.getenv("EMBEDDING_MODEL_NAME", "all-MiniLM-L6-v2")
 CHUNK_SIZE = int(os.getenv("CHUNK_SIZE", 1000))
 CHUNK_OVERLAP = int(os.getenv("CHUNK_OVERLAP", 200))
 
+# SpaCy Configuration
+# If using spaCy for advanced text processing/NER, ensure the model is downloaded:
+# python -m spacy download en_core_web_sm
+
 # OCR Configuration (for image-based PDFs)
 # Set to True to enable OCR using pytesseract. Requires Tesseract-OCR installation.
 ENABLE_OCR = os.getenv("ENABLE_OCR", "False").lower() == "true"

@@ -1,27 +1,50 @@
-body {
+:root {
+  --primary-color: #6200EE; /* Deep Purple */
+  --secondary-color: #F5F5F5; /* Very Light Grey - main background */
+  --text-color: #212121; /* Dark Grey */
+  --header-bg-color: #3700B3; /* Darker Purple */
+  --button-hover-color: #BB86FC; /* Lighter Purple */
+  --success-color: #03DAC6; /* Teal */
+  --error-color: #CF6679; /* Soft Red */
+  --card-bg-color: #FFFFFF; /* White for chat and feature panels */
+  --border-color: #E0E0E0; /* Light grey for borders */
+}
+
+html, body, #root {
+  height: 100%;
   margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
-    sans-serif;
+  padding: 0;
+}
+
+body {
+  font-family: 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  background-color: #f4f4f4;
-  color: #333;
+  background-color: var(--secondary-color); /* Main background */
+  color: var(--text-color);
+  line-height: 1.6;
 }
 
 .App {
+  display: flex;
+  flex-direction: column;
   text-align: center;
+  height: 100%;
+  padding: 0;
 }
 
 .App-header {
-  background-color: #282c34;
-  padding: 20px;
+  background: linear-gradient(135deg, var(--header-bg-color) 0%, #5300D8 100%); /* Darker purple gradient */
+  padding: 25px 20px;
   color: white;
-  margin-bottom: 20px;
+  margin-bottom: 0;
+  box-shadow: 0 6px 15px rgba(0, 0, 0, 0.2);
+  text-align: center;
+  font-size: 1.2em;
 }
 
 .App-link {
-  color: #61dafb;
+  color: #BB86FC; /* Lighter purple for links */
 }
 
 .loading {
@@ -29,37 +52,75 @@ body {
 }
 
 .success {
-  color: #4CAF50; /* Green */
+  color: var(--success-color);
 }
 
 .error {
-  color: #f44336; /* Red */
+  color: var(--error-color);
 }
 
 .main-content {
   display: flex;
-  justify-content: center;
   gap: 20px;
   padding: 20px;
+  flex-grow: 1;
+  width: 100%;
+  box-sizing: border-box;
+  margin: 0;
 }
 
 .chat-container {
-  flex: 2;
-  max-width: 800px;
-  background-color: #fff;
-  border-radius: 8px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  flex-grow: 1;
+  max-width: none;
+  background-color: var(--card-bg-color); /* White background for chat container */
+  border-radius: 12px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
   display: flex;
   flex-direction: column;
-  height: 70vh;
   overflow: hidden;
+  border: 1px solid var(--border-color);
+  margin-left: 0;
+}
+
+.chat-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 15px 20px;
+  background-color: #F0F0F0; /* Light grey header for chat */
+  border-bottom: 1px solid var(--border-color);
+  border-top-left-radius: 12px;
+  border-top-right-radius: 12px;
+}
+
+.chat-header h2 {
+  margin: 0;
+  color: var(--primary-color);
+  font-size: 1.2em;
+}
+
+.clear-history-button {
+  background-color: #FF5252; /* Red for clear button */
+  color: white;
+  border: none;
+  border-radius: 5px;
+  padding: 8px 15px;
+  cursor: pointer;
+  font-size: 0.9em;
+  font-weight: 600;
+  transition: background-color 0.3s ease, transform 0.2s ease;
+}
+
+.clear-history-button:hover {
+  background-color: #D32F2F; /* Darker red on hover */
+  transform: translateY(-1px);
 }
 
 .chat-history {
   flex-grow: 1;
-  padding: 20px;
+  padding: 10px;
   overflow-y: auto;
-  border-bottom: 1px solid #eee;
+  border-bottom: 1px solid var(--border-color);
 }
 
 .chat-message {
@@ -76,17 +137,42 @@ body {
 }
 
 .chat-message.user p {
-  background-color: #007bff;
+  background-color: var(--primary-color); /* Deep Purple for user messages */
   color: white;
   float: right;
-  border-bottom-right-radius: 2px;
+  border-bottom-right-radius: 4px;
 }
 
 .chat-message.bot p {
-  background-color: #e2e2e2;
-  color: #333;
+  background-color: #E8EAF6; /* Light Blue-Grey for bot messages */
+  color: var(--text-color);
   float: left;
-  border-bottom-left-radius: 2px;
+  border-bottom-left-radius: 4px;
+  white-space: pre-wrap;
+  text-align: left;
+}
+
+.bot-response-content {
+  background-color: #E8EAF6; /* Light Blue-Grey for bot response content */
+  color: var(--text-color);
+  float: left;
+  border-radius: 15px;
+  border-bottom-left-radius: 4px;
+  padding: 8px 12px;
+  max-width: 80%;
+  text-align: left;
+  word-wrap: break-word;
+  position: relative;
+}
+
+.bot-response-content p {
+  margin: 0;
+  padding: 0;
+}
+
+.bot-text {
+  font-size: 1em;
+  line-height: 1.5;
 }
 
 .chat-message::after {
@@ -103,30 +189,34 @@ body {
 .chat-input-area {
   display: flex;
   padding: 15px;
-  border-top: 1px solid #eee;
+  border-top: 1px solid var(--border-color);
 }
 
 .chat-input-area input {
   flex-grow: 1;
-  padding: 10px;
-  border: 1px solid #ddd;
-  border-radius: 5px;
+  padding: 12px;
+  border: 1px solid var(--primary-color); /* Primary color border */
+  border-radius: 8px;
   margin-right: 10px;
   font-size: 1em;
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.08);
 }
 
 .chat-input-area button {
-  padding: 10px 20px;
-  background-color: #007bff;
+  padding: 12px 25px;
+  background-color: var(--primary-color); /* Primary color for buttons */
   color: white;
   border: none;
-  border-radius: 5px;
+  border-radius: 8px;
   cursor: pointer;
-  font-size: 1em;
+  font-size: 1.05em;
+  font-weight: 600;
+  transition: background-color 0.3s ease, transform 0.2s ease, box-shadow 0.2s ease;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
 }
 
 .chat-input-area button:hover {
-  background-color: #0056b3;
+  background-color: var(--button-hover-color); /* Lighter Purple on hover */
 }
 
 .chat-input-area button:disabled {
@@ -134,13 +224,39 @@ body {
   cursor: not-allowed;
 }
 
+.voice-button {
+  background-color: #4CAF50; /* Green for voice button */
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 12px 15px;
+  cursor: pointer;
+  font-size: 1.05em;
+  font-weight: 600;
+  transition: background-color 0.3s ease, transform 0.2s ease, box-shadow 0.2s ease;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+  margin-right: 10px; /* Space between voice and ask button */
+}
+
+.voice-button:hover {
+  background-color: #45a049; /* Darker green on hover */
+}
+
+.voice-button.listening {
+  background-color: #F44336; /* Red when listening */
+}
+
+.voice-button.listening:hover {
+  background-color: #D32F2F; /* Darker red when listening and hovered */
+}
+
 .source-documents {
   margin-top: 10px;
   padding: 10px;
-  background-color: #f0f0f0;
+  background-color: #F0F4C3; /* Light yellow-green */
   border-radius: 5px;
   font-size: 0.8em;
-  clear: both; /* Clear floats from previous messages */
+  clear: both;
 }
 
 .source-documents h4 {
@@ -152,74 +268,146 @@ body {
 .source-doc-item {
   margin-bottom: 5px;
   padding: 5px;
-  background-color: #e9e9e9;
+  background-color: #E6EE9C; /* Slightly darker yellow-green */
   border-radius: 3px;
 }
 
 .summary-output {
   margin-top: 10px;
-  padding: 10px;
-  background-color: #e0f7fa; /* Light blue for summaries */
-  border-left: 5px solid #00bcd4;
-  border-radius: 5px;
-  font-size: 0.9em;
+  padding: 15px;
+  background-color: #E0F2F7; /* Very light blue */
+  border-left: 5px solid var(--success-color); /* Teal border */
+  border-radius: 8px;
+  font-size: 0.95em;
   clear: both;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
 }
 
 .feature-panel {
-  flex: 1;
-  max-width: 400px;
-  background-color: #fff;
-  border-radius: 8px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-  padding: 20px;
+  flex-shrink: 0;
+  width: 550px;
+  background-color: var(--card-bg-color); /* White background for feature panel */
+  border-radius: 12px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
+  padding: 10px;
   text-align: left;
+  border: 1px solid var(--border-color);
+  display: flex;
+  flex-direction: column;
+  margin-right: 0;
 }
 
 .feature-panel h2 {
-  color: #0056b3;
+  color: var(--primary-color); /* Primary color for headings */
   margin-top: 0;
-  margin-bottom: 20px;
+  margin-bottom: 25px;
   text-align: center;
+  font-size: 1.8em;
+  font-weight: 600;
 }
 
 .tool-section {
   margin-bottom: 20px;
   padding: 15px;
-  border: 1px solid #eee;
+  border: 1px solid var(--border-color);
   border-radius: 5px;
-  background-color: #f9f9f9;
+  background-color: #F8F8F8; /* Slightly off-white for tool sections */
 }
 
 .tool-section h3 {
   margin-top: 0;
-  color: #333;
+  color: var(--text-color);
   font-size: 1.1em;
   margin-bottom: 10px;
 }
 
+.pdf-input-group {
+  display: flex;
+  align-items: center;
+  margin-bottom: 10px;
+  border: 1px solid var(--border-color); /* Apply border to the container */
+  border-radius: 5px; /* Apply border-radius to the container */
+  overflow: hidden; /* Clip content to respect border-radius */
+}
+
+.pdf-input-group input[type="text"] {
+  flex-grow: 1;
+  padding: 0 10px; /* Keep horizontal padding, remove vertical */
+  border: none; /* Remove individual border */
+  border-radius: 0; /* Remove individual border-radius */
+  font-size: 0.9em;
+  margin-bottom: 0;
+  height: 40px; /* Explicit height */
+  line-height: 40px; /* Vertically center text */
+  box-sizing: border-box; /* Include padding in height calculation */
+}
+
+.pdf-input-group input[type="text"]:focus {
+  outline: none;
+}
+
+.file-upload-label {
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 12px;
+  background-color: #E0E0E0; /* Light grey for attachment button */
+  border: none; /* Remove individual border */
+  border-radius: 0; /* Remove individual border-radius */
+  transition: background-color 0.3s ease;
+  height: 40px;
+  box-sizing: border-box;
+}
+
+.file-upload-label:hover {
+  background-color: #D0D0D0;
+}
+
+.file-upload-label input[type="file"] {
+  display: none;
+}
+
+.attach-icon {
+  font-size: 1.2em;
+  color: #555;
+}
+
+.selected-file-name {
+  font-size: 0.85em;
+  color: #555;
+  margin-top: -5px;
+  margin-bottom: 10px;
+  text-align: center;
+}
+
 .tool-section input[type="text"] {
-  width: calc(100% - 22px); /* Account for padding and border */
+  width: calc(100% - 22px);
   padding: 10px;
   margin-bottom: 10px;
-  border: 1px solid #ddd;
+  border: 1px solid var(--border-color);
   border-radius: 5px;
   font-size: 0.9em;
 }
 
 .tool-section button {
   width: 100%;
-  padding: 10px;
-  background-color: #28a745; /* Green for action buttons */
+  padding: 14px;
+  background-color: var(--primary-color);
   color: white;
   border: none;
-  border-radius: 5px;
+  border-radius: 8px;
   cursor: pointer;
-  font-size: 1em;
+  font-size: 1.1em;
+  font-weight: 600;
+  transition: background-color 0.3s ease, transform 0.2s ease, box-shadow 0.2s ease;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
 }
 
 .tool-section button:hover {
-  background-color: #218838;
+  background-color: var(--button-hover-color);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 15px rgba(0, 0, 0, 0.25);
 }
 
 .tool-section button:disabled {
@@ -234,6 +422,87 @@ body {
 }
 
 .error-message {
-  color: #f44336;
+  color: var(--error-color);
   font-weight: bold;
+}
+
+/* New styles for translation feature */
+.translate-button {
+  background-color: #9E9E9E; /* Medium Grey */
+  color: white;
+  border: none;
+  border-radius: 5px;
+  padding: 5px 10px;
+  cursor: pointer;
+  font-size: 0.8em;
+  margin-top: 10px;
+  float: right;
+  transition: background-color 0.2s ease;
+}
+
+.translate-button:hover {
+  background-color: #757575;
+}
+
+.translate-options {
+  position: absolute;
+  background-color: var(--card-bg-color); /* White background */
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  padding: 10px;
+  z-index: 10;
+  right: 0;
+  top: 100%;
+  width: 200px;
+  max-height: 250px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.translate-options input[type="text"] {
+  width: calc(100% - 20px);
+  padding: 8px;
+  margin-bottom: 5px;
+  border: 1px solid var(--border-color);
+  border-radius: 5px;
+  font-size: 0.9em;
+}
+
+.language-list {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.language-list button {
+  background-color: #F0F0F0; /* Light grey */
+  color: var(--text-color);
+  border: 1px solid var(--border-color);
+  border-radius: 5px;
+  padding: 8px;
+  text-align: left;
+  cursor: pointer;
+  transition: background-color 0.2s ease, border-color 0.2s ease;
+}
+
+.language-list button:hover {
+  background-color: #E0E0E0;
+  border-color: #C0C0C0;
+}
+
+.language-list button.selected {
+  background-color: var(--primary-color); /* Primary color when selected */
+  color: white;
+  border-color: var(--primary-color);
+}
+
+.speech-recognition-warning {
+  color: var(--error-color);
+  font-size: 0.85em;
+  margin-top: 10px;
+  text-align: center;
+  width: 100%;
 }

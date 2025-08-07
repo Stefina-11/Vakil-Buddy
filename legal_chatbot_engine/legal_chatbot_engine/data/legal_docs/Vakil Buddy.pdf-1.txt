@@ -1,0 +1,2 @@
+This is a dummy PDF file for testing the Vakil Buddy Legal Chatbot AI Engine.
+It contains some placeholder text to simulate a legal document.
