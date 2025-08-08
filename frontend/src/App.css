@@ -20,7 +20,7 @@ body {
   font-family: 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  background-color: var(--secondary-color); /* Main background */
+  background: linear-gradient(135deg, #E6E6FA 0%, #D8BFD8 100%); /* Lavender gradient for main background */
   color: var(--text-color);
   line-height: 1.6;
 }
@@ -100,7 +100,7 @@ body {
 }
 
 .clear-history-button {
-  background-color: #FF5252; /* Red for clear button */
+  background-color: var(--primary-color); /* Primary color for clear button */
   color: white;
   border: none;
   border-radius: 5px;
@@ -112,7 +112,7 @@ body {
 }
 
 .clear-history-button:hover {
-  background-color: #D32F2F; /* Darker red on hover */
+  background-color: var(--button-hover-color); /* Lighter Purple on hover */
   transform: translateY(-1px);
 }
 
@@ -312,6 +312,9 @@ body {
   border: 1px solid var(--border-color);
   border-radius: 5px;
   background-color: #F8F8F8; /* Slightly off-white for tool sections */
+  display: flex; /* Enable flexbox */
+  flex-direction: column; /* Stack children vertically */
+  gap: 10px; /* Add space between children */
 }
 
 .tool-section h3 {
@@ -381,13 +384,25 @@ body {
   text-align: center;
 }
 
-.tool-section input[type="text"] {
-  width: calc(100% - 22px);
+.tool-section input[type="text"],
+.tool-section select,
+.tool-section textarea {
+  width: calc(100% - 22px); /* Account for padding and border */
   padding: 10px;
-  margin-bottom: 10px;
   border: 1px solid var(--border-color);
   border-radius: 5px;
   font-size: 0.9em;
+  box-sizing: border-box; /* Include padding and border in the element's total width and height */
+}
+
+.tool-section select {
+  height: 40px; /* Consistent height with text inputs */
+  background-color: white; /* Ensure background is white */
+}
+
+.tool-section textarea {
+  resize: vertical; /* Allow vertical resizing */
+  min-height: 80px; /* Minimum height for textarea */
 }
 
 .tool-section button {

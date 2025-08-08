@@ -10,6 +10,9 @@ function App() {
   const [chatHistory, setChatHistory] = useState([]);
   const [isQuerying, setIsQuerying] = useState(false);
   const [isSummarizing, setIsSummarizing] = useState(false);
+  const [isGeneratingDocument, setIsGeneratingDocument] = useState(false); // New state for document generation
+  const [documentPrompt, setDocumentPrompt] = useState(''); // New state for document generation prompt
+  const [documentType, setDocumentType] = useState('notice'); // New state for selected document type (notice/summons)
   const [showTranslateOptions, setShowTranslateOptions] = useState(null); // Stores index of message being translated
   const [selectedLanguage, setSelectedLanguage] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
@@ -42,8 +45,17 @@ function App() {
       recognitionRef.current.onerror = (event) => {
         console.error('Speech recognition error:', event.error);
         setIsListening(false);
-        // Optionally, inform the user about the error, e.g., microphone access denied
-        alert(`Speech recognition error: ${event.error}. Please check microphone permissions.`);
+        let errorMessage = `Speech recognition error: ${event.error}.`;
+        if (event.error === 'not-allowed') {
+          errorMessage += ' Microphone access was denied. Please allow microphone access in your browser settings.';
+        } else if (event.error === 'network') {
+          errorMessage += ' A network error occurred. Please check your internet connection and microphone permissions.';
+        } else if (event.error === 'no-speech') {
+          errorMessage += ' No speech was detected. Please try again and speak clearly.';
+        } else if (event.error === 'audio-capture') {
+          errorMessage += ' Audio capture failed. Please ensure your microphone is connected and working.';
+        }
+        alert(errorMessage);
       };
 
       recognitionRef.current.onend = () => {
@@ -86,6 +98,50 @@ function App() {
 
   const handleClearHistory = () => {
     setChatHistory([]);
+  };
+
+  const handleGenerateDocument = async () => {
+    if (!documentPrompt.trim()) return;
+
+    const userMessage = { sender: 'user', type: 'generate_document_request', text: `Generate ${documentType}: "${documentPrompt}"` };
+    setChatHistory(prev => [...prev, userMessage]);
+    setDocumentPrompt('');
+    setIsGeneratingDocument(true);
+
+    try {
+      const response = await fetch('http://127.0.0.1:8001/generate-legal-document', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ prompt: documentPrompt, document_type: documentType }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      // The backend returns a PDF, so we need to handle it as a blob
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${documentType}_generated.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(url);
+
+      const botMessage = { sender: 'bot', type: 'generate_document_response', text: `Successfully generated and downloaded ${documentType}.` };
+      setChatHistory(prev => [...prev, botMessage]);
+
+    } catch (error) {
+      const errorMessage = { sender: 'bot', type: 'error', text: `Error: Failed to generate document. ${error.message}` };
+      setChatHistory(prev => [...prev, errorMessage]);
+      console.error('Error generating legal document:', error);
+    } finally {
+      setIsGeneratingDocument(false);
+    }
   };
 
   const handleVoiceInput = () => {
@@ -200,6 +256,8 @@ function App() {
         handleQuerySubmit();
       } else if (type === 'summarize' && !isSummarizing) {
         handleSummarizeSubmit();
+      } else if (type === 'generate_document' && !isGeneratingDocument) {
+        handleGenerateDocument();
       }
     }
   };
@@ -272,6 +330,7 @@ function App() {
               <div key={index} className={`chat-message ${msg.sender}`}>
                 {msg.type === 'query' && <p><strong>You:</strong> {msg.text}</p>}
                 {msg.type === 'summarize_request' && <p><strong>You:</strong> {msg.text}</p>}
+                {msg.type === 'generate_document_request' && <p><strong>You:</strong> {msg.text}</p>}
                 {msg.type === 'query_response' && (
                   <div className="bot-response-content">
                     <p><strong>Vakil Buddy:</strong></p>
@@ -317,10 +376,15 @@ function App() {
                     </div>
                   </div>
                 )}
+                {msg.type === 'generate_document_response' && (
+                  <div className="bot-response-content">
+                    <p><strong>Vakil Buddy:</strong> {msg.text}</p>
+                  </div>
+                )}
                 {msg.type === 'error' && <p className="error-message"><strong>Error:</strong> {msg.text}</p>}
               </div>
             ))}
-            {(isQuerying || isSummarizing) && <div className="chat-message bot loading-message">Vakil Buddy is processing...</div>}
+            {(isQuerying || isSummarizing || isGeneratingDocument) && <div className="chat-message bot loading-message">Vakil Buddy is processing...</div>}
           </div>
           <div className="chat-input-area">
             <input
@@ -329,16 +393,16 @@ function App() {
               onChange={(e) => setQuery(e.target.value)}
               onKeyPress={(e) => handleKeyPress(e, 'query')}
               placeholder="Ask a legal question..."
-              disabled={isQuerying || isSummarizing || isListening}
+              disabled={isQuerying || isSummarizing || isGeneratingDocument || isListening}
             />
             <button
               onClick={handleVoiceInput}
-              disabled={!isSpeechRecognitionSupported || isQuerying || isSummarizing}
+              disabled={!isSpeechRecognitionSupported || isQuerying || isSummarizing || isGeneratingDocument}
               className={`voice-button ${isListening ? 'listening' : ''}`}
             >
               {isListening ? '🔴' : '🎤'}
             </button>
-            <button onClick={handleQuerySubmit} disabled={isQuerying || isSummarizing || isListening}>
+            <button onClick={handleQuerySubmit} disabled={isQuerying || isSummarizing || isGeneratingDocument || isListening}>
               {isQuerying ? 'Querying...' : 'Ask'}
             </button>
             {!isSpeechRecognitionSupported && (
@@ -360,7 +424,7 @@ function App() {
                 onChange={(e) => setPdfPath(e.target.value)}
                 onKeyPress={(e) => handleKeyPress(e, 'summarize')}
                 placeholder="Enter PDF path (e.g., data/doc.pdf)"
-                disabled={isQuerying || isSummarizing || selectedFile} // Disable if file is selected
+                disabled={isQuerying || isSummarizing || isGeneratingDocument || selectedFile} // Disable if file is selected
               />
               <label htmlFor="file-upload" className="file-upload-label">
                 <input
@@ -368,16 +432,40 @@ function App() {
                   type="file"
                   accept=".pdf"
                   onChange={handleFileChange}
-                  disabled={isQuerying || isSummarizing || pdfPath.trim()} // Disable if path is entered
+                  disabled={isQuerying || isSummarizing || isGeneratingDocument || pdfPath.trim()} // Disable if path is entered
                 />
                 <span className="attach-icon">📎</span> {/* Attachment icon */}
               </label>
             </div>
             {selectedFile && <p className="selected-file-name">Selected: {selectedFile.name}</p>}
-            <button onClick={handleSummarizeSubmit} disabled={isQuerying || isSummarizing || (!pdfPath.trim() && !selectedFile)}>
+            <button onClick={handleSummarizeSubmit} disabled={isQuerying || isSummarizing || isGeneratingDocument || (!pdfPath.trim() && !selectedFile)}>
               {isSummarizing ? 'Summarizing...' : 'Summarize PDF'}
             </button>
             <p className="note">Note: Ensure the PDF path is accessible by the backend server, or upload a file.</p>
+          </div>
+
+          <div className="tool-section">
+            <h3>Generate Legal Document</h3>
+            <select
+              value={documentType}
+              onChange={(e) => setDocumentType(e.target.value)}
+              disabled={isQuerying || isSummarizing || isGeneratingDocument}
+            >
+              <option value="notice">Notice</option>
+              <option value="summons">Summons</option>
+            </select>
+            <textarea
+              value={documentPrompt}
+              onChange={(e) => setDocumentPrompt(e.target.value)}
+              onKeyPress={(e) => handleKeyPress(e, 'generate_document')}
+              placeholder={`Enter details for the ${documentType} (e.g., "Draft a notice for unpaid rent for John Doe at 123 Main St, due on 2023-01-01").`}
+              rows="5"
+              disabled={isQuerying || isSummarizing || isGeneratingDocument}
+            ></textarea>
+            <button onClick={handleGenerateDocument} disabled={isQuerying || isSummarizing || isGeneratingDocument || !documentPrompt.trim()}>
+              {isGeneratingDocument ? 'Generating...' : `Generate ${documentType} PDF`}
+            </button>
+            <p className="note">Note: The generated document will be downloaded as a PDF.</p>
           </div>
         </div>
       </div>
