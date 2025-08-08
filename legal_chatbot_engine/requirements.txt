@@ -9,3 +9,5 @@ sentence-transformers
 python-multipart
 transformers
 torch # or tensorflow, depending on your backend for transformers
+reportlab
+sentencepiece

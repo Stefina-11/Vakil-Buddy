@@ -9,6 +9,10 @@ from typing import List
 from fastapi.middleware.cors import CORSMiddleware
 import shutil # Import shutil for file operations
 from transformers import pipeline # For translation
+from reportlab.lib.pagesizes import letter
+from reportlab.pdfgen import canvas
+from io import BytesIO
+from fastapi.responses import StreamingResponse
 
 app = FastAPI(
     title="Vakil Buddy Legal Chatbot AI Engine",
@@ -59,6 +63,10 @@ class ExtractCitationsRequest(BaseModel):
 class TranslateRequest(BaseModel):
     text: str
     target_language: str
+
+class GenerateDocumentRequest(BaseModel):
+    prompt: str
+    document_type: str # "notice" or "summons"
 
 # Initialize translation pipeline
 # This will download the model the first time it's run.
@@ -289,6 +297,41 @@ async def translate_text(request: TranslateRequest):
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Translation failed: {str(e)}")
+
+@app.post("/generate-legal-document")
+async def generate_legal_document(request: GenerateDocumentRequest):
+    """
+    Generates a legal document (notice or summons) based on a prompt and returns it as a PDF.
+    """
+    if request.document_type.lower() not in ["notice", "summons"]:
+        raise HTTPException(status_code=400, detail="Invalid document type. Must be 'notice' or 'summons'.")
+
+    try:
+        # Generate the text content using the LLM
+        document_content = generate_legal_document_content(request.prompt, request.document_type)
+        
+        # Create a PDF from the generated content
+        buffer = BytesIO()
+        p = canvas.Canvas(buffer, pagesize=letter)
+        textobject = p.beginText()
+        textobject.setTextOrigin(50, 750)
+        textobject.setFont("Helvetica", 12)
+        
+        # Split content into lines and add to PDF
+        for line in document_content.split('\n'):
+            textobject.textLine(line)
+        
+        p.drawText(textobject)
+        p.showPage()
+        p.save()
+        
+        buffer.seek(0)
+        
+        filename = f"{request.document_type.lower()}_generated.pdf"
+        return StreamingResponse(buffer, media_type="application/pdf", headers={"Content-Disposition": f"attachment; filename={filename}"})
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"An error occurred during document generation: {str(e)}")
 
 # Root endpoint for basic health check
 @app.get("/")

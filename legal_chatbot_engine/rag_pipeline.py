@@ -243,6 +243,45 @@ def extract_citations_from_text(text: str) -> List[str]:
     
     return citations
 
+def generate_legal_document_content(prompt: str, document_type: str) -> str:
+    """
+    Generates the content for a legal document (notice or summons) using the LLM.
+    """
+    llm = get_llm()
+    if isinstance(llm, DummyLLM):
+        return f"This is a simulated {document_type} content from the DummyLLM based on your prompt: '{prompt}'. Please integrate a real LLM for actual document generation."
+
+    if document_type.lower() == "notice":
+        template = """You are an AI assistant specialized in Indian legal documents.
+        Generate the content for a legal notice based on the following details provided by the user.
+        Ensure the language is formal, legally sound, and adheres to the general structure and common clauses of an Indian legal notice, as per constitutional law principles.
+        Include standard sections like "To," "From," "Subject," "Facts," "Legal Grounds," "Relief Sought," and "Date."
+        Use clear, unambiguous legal terminology. If specific details are missing, use appropriate placeholders.
+
+        User Prompt: {prompt}
+
+        Legal Notice Content:"""
+    elif document_type.lower() == "summons":
+        template = """You are an AI assistant specialized in Indian legal documents.
+        Generate the content for a legal summons based on the following details provided by the user.
+        Ensure the language is formal, legally sound, and adheres to the general structure and common clauses of an Indian legal summons, as per constitutional law principles.
+        Include standard sections like "Court Name," "Case Number," "Parties (Plaintiff/Defendant)," "Date of Hearing," "Purpose of Summons," and "Issuing Authority."
+        Use clear, unambiguous legal terminology. If specific details are missing, use appropriate placeholders.
+
+        User Prompt: {prompt}
+
+        Legal Summons Content:"""
+    else:
+        return "Invalid document type. Please specify 'notice' or 'summons'."
+
+    PROMPT = PromptTemplate(template=template, input_variables=["prompt"])
+
+    try:
+        generated_content = llm(PROMPT.format(prompt=prompt))
+        return generated_content
+    except Exception as e:
+        return f"Error generating {document_type} content: {str(e)}"
+
 
 if __name__ == "__main__":
     # Example usage:
